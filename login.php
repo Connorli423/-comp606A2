@@ -1,105 +1,151 @@
-<?php
-    session_start();
-
-    //connect to database
-    $con = mysqli_connect("localhost", "root", "", "loginSystem");
-    mysqli_query($con,"set names utf8");
-    if (!$con){
-       die("Could not connect:".mysqli_connect_error());
-    }
-	if (isset($_POST['login_btn'])) {
-
-		$username = trim($_POST["username"]);
-		$password = trim($_POST["password"]);
-		
-		$password = md5($password);
-		$sql = "SELECT * FROM users WHERE username='$username' AND password='$password'";
-		$result = mysqli_query($con, $sql);
-        $num = mysqli_num_rows($result);
-		if($num == 1) {
-			$_SESSION['message'] = "You are logged in now";
-			$_SESSION['username'] = $username;
-			header("location: home.php"); //redirect to home page
-		}else {
-			$_SESSION['message'] = "Username or password incorrect";
-		}
-	}
-?> 
-
-<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="utf-8"> 
-	<title>Welcome to login</title>
-	<link rel="stylesheet" type="text/css" href="css/style.css">
-</head>
-<body>
 
 <?php
-	if (isset($_SESSION['message'])) {
-		echo "<div id='error_msg'>".$_SESSION['message']."</div>";
-		unset($_SESSION['message']);
-	}
+    
+    require "./libs/dbconnect.php";
+    require "./libs/autoloader.php";
+   
+    if(isset($_POST['submit'])){
+        $user = $_POST['username'];
+        $pwd = $_POST['password'];
+        // login Method
+        $res = User::login($connect,$user,$pwd);
+        if($res){
+            header("Location:./index.php");
+        }else{
+            exit("error,please <a href='./login.php'>try</a> again");
+        }
+        
+        
+    }
 ?>
-
-
 <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8"> 
-    <title>loginSystem</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
-</head>
-<body>
-<header>
-        <div class="logo">
-            <h1 class="logo-text"><span>Safe</span>Trade</h1> 
-        </div>
-        <i class="fa fa-bars menu-toggle"></i>
-            <ul class="nav">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Services</a></li>
-                <!-- <li><a href="#">SignUp</a></li>
-                <li><a href="#">Login</a></li> -->
-                <li>
-                    <a href="#">
-                        <i class="fa fa-user"></i>
-                         Register
-                        <i class="fa fa-chevron-down" style="font-size: .8em;"></i>
-                    </a>
-                    <ul>
-                        <li><a href="userRegister.php">Customer?</a></li>    
-                        <li><a href="trademanRegister.php">Trademan?</a></li> 
-                    </ul>
-                </li>
-            </ul>
-    </header>
+<html lang="en">
 
-<?php 
-    if(isset($_SESSSION['message'])) {
-        echo "<div id='error message'>" .$_SESSION['message']."</div>";
-        unset($_SESSION['message']);
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <!-- cdn引入jquery插件 -->
+    <script src="./js/jquery.min.js"></script>
+    <title>Login page</title>
+</head>
+<style>
+    body {
+        background: rgb(249, 249, 249)
     }
 
-?>
+    * {
+        margin: 0px;
+        padding: 0px;
+    }
 
-<div class="wrap">
-    <h2>Login</h2>      
-    <form method="post" action="login.php">
-            <tr>
-                <td>Username</td>
-                <td><input type="text" name="username" class="textInput" required></td>
-            </tr>
-            <tr>
-                <td>Password</td>
-                <td><input type="password" name="password" class="textInput" required></td>
-            </tr>
-            <tr>
-                <td></td>
-                <td><input type="submit" name="login_btn" value="Login" required></td>
-            </tr>
-    </form>
-</div>
+    .container {
+        width: 1000px;
+        overflow: hidden;
+        margin: 0px auto;
+        margin-top: 60px;
+        height: auto;
+        background: rgb(249, 249, 249);
+        position: relative;
+    }
+
+    #banner {
+        background: url('./image/search.png');
+        background-size: cover;
+        float: left;
+        width: 660px;
+        height: 630px;
+    }
+
+    #form {
+        float: right;
+        width: 300px;
+        height: 630px;
+        background: white;
+        border-radius: 29px;
+        padding: 0px 18px;
+        box-sizing: border-box
+    }
+
+    .label {
+        margin: 39px 0px 9px;
+    }
+
+    input {
+        outline: none;
+        border: none;
+        border-bottom: 1px solid rgb(199, 199, 199);
+        width: 264px;
+        font-size: 16px;
+        color: rgb(79, 79, 79);
+    }
+
+    .tip_word {
+        display: block;
+        float: left;
+        color: red;
+        width: 300px;
+        /* height:20px; */
+    }
+
+    #submit :hover {
+        background: #a152c4;
+        cursor: pointer;
+    }
+</style>
+
+<body>
+    <div class="container">
+        <div id='banner'></div>
+        <form id='form' action="./login.php" method="POST" onSubmit='return toValue()'>
+            <h2 style='text-align:center;margin-top:16px;'>Login</h2>
+
+            <p class='label'>Username</p>
+            <input type='text' class='username' name='username' placeholder='Enter your username' value=''>
+            <p class='tip_word usernametip'></p>
+
+            <p class='label'>Password</p>
+            <input type='password' class='password' name='password' placeholder='Enter your password' value=''>
+            <p class='tip_word passwordtip'></p>
+          
+            <input type="submit" name='submit' id='submit' style='margin-top:29px;height: 29px;border-radius:29px;background:rgb(103,97,161);color:rgb(249,249,249);' value='Submit'>
+        </form>
+       
+        <div style='position:absolute;bottom:8px;right:8px;'><a href="./register.php">register page</a></div>
+    </div>
 </body>
+<script>
+    function toValue(){
+      
+        var username = $('.username').val();
+        var password = $('.password').val();
+        
+        var usernametip = $('.usernametip');
+        var passwordtip = $('.passwordtip');
+       
+        usernametip.html("");
+        passwordtip.html("");
+       
+
+        if(username == ''){
+            usernametip.html('required');
+            return false;
+        }
+        
+
+      
+        if(password == ''){
+            passwordtip.html('required');
+            return false;
+        }
+       
+        return true;
+       
+    }
+        
+
+
+    
+</script>
+
 </html>
